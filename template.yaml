@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09' #cloudfromation template version
+Transform: AWS::Serverless-2016-10-31  #tell aws this templete contain sam resource
+ #internall convert them into cloudformation resource
+
+Description: Serverless User Directory Application
+
+Resources:   # all infra componet go here
+   UsersTable:
+    Type: AWS::DynamoDB::Table
+
+    Properties:
+      TableName: users-table
+
+      BillingMode: PAY_PER_REQUEST
+      #db need capacity  dataa base need read write capacity so pay whn only reueest happen
+
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+      #define premine key structure
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH 
+
+    #lamda fuunction
+   HealthFunction:
+    Type: AWS::Serverless::Function  #create lamda
+
+    Properties:
+      FunctionName: health-function
+
+      Runtime: python3.12
+
+      Handler: src/handlers/health.lambda_handler
+
+      CodeUri: .
+
+      MemorySize: 128 # lamdba gets 128 mb ram
+
+      Timeout: 5 # maxium lamda execution timw
+      #create api gateway
+      Events:
+        HealthApi:
+          Type: Api
+
+          Properties:
+            Path: /v1/health
+            Method: get

@@ -19,7 +19,7 @@ def lambda_handler(event, context):
     return {
         "statusCode": 200,
         "body": json.dumps({
-            "message": "users synced successfully",
+            "message": "users synced successfull",
             "usersProcessed": users_processed
         })
     }

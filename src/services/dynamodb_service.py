@@ -1,4 +1,4 @@
-#ambda actually writes into DynamoDB.
+#lambda actually writes into DynamoDB.
 import boto3
 
 

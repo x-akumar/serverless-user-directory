@@ -1,31 +1,29 @@
-AWSTemplateFormatVersion: '2010-09-09' #cloudfromation template version
-Transform: AWS::Serverless-2016-10-31  #tell aws this templete contain sam resource
- #internall convert them into cloudformation resource
+AWSTemplateFormatVersion: '2010-09-09' 
+Transform: AWS::Serverless-2016-10-31  
 
 Description: Serverless User Directory Application
 
-Resources:   # all infra componet go here
-   UsersTable:
+Resources:   
+  UsersTable:
     Type: AWS::DynamoDB::Table
 
     Properties:
       TableName: users-table
 
       BillingMode: PAY_PER_REQUEST
-      #db need capacity  dataa base need read write capacity so pay whn only reueest happen
+      
 
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: N
-      #define premine key structure
+      
       KeySchema:
         - AttributeName: id
           KeyType: HASH 
 
-    #lamda fuunction
-   HealthFunction:
-    Type: AWS::Serverless::Function  #create lamda
-
+ 
+  HealthFunction:
+    Type: AWS::Serverless::Function  
     Properties:
       FunctionName: health-function
 
@@ -35,10 +33,9 @@ Resources:   # all infra componet go here
 
       CodeUri: .
 
-      MemorySize: 128 # lamdba gets 128 mb ram
+      MemorySize: 128 
 
-      Timeout: 5 # maxium lamda execution timw
-      #create api gateway
+      Timeout: 5 
       Events:
         HealthApi:
           Type: Api
@@ -46,3 +43,130 @@ Resources:   # all infra componet go here
           Properties:
             Path: /v1/health
             Method: get
+           
+  SyncUsersFunction:
+    Type: AWS::Serverless::Function
+
+    Properties:
+      FunctionName: sync-users-function
+
+      Runtime: python3.12
+
+      Handler: src/handlers/sync_users.lambda_handler
+
+      CodeUri: .
+
+      MemorySize: 256
+
+      Timeout: 30
+     
+      Policies:
+
+        - DynamoDBCrudPolicy:
+
+            TableName: users-table
+
+        - Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: "*"
+
+      Events:
+        SyncUsersApi:
+          Type: Api
+
+          Properties:
+            Path: /v1/admin/sync-users 
+            Method: post
+
+  UsersFunction:
+    Type: AWS::Serverless::Function
+
+    Properties:
+      FunctionName: users-function
+
+      Runtime: python3.12
+
+      Handler: src/handlers/users.lambda_handler
+
+      CodeUri: .
+
+      MemorySize: 128
+
+      Timeout: 10
+
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: users-table
+
+      Events:
+        GetUsersApi:
+          Type: Api
+
+          Properties:
+            Path: /v1/users
+            Method: get
+
+  UserDetailsFunction:
+    Type: AWS::Serverless::Function
+
+    Properties:
+      FunctionName: user-details-function
+
+      Runtime: python3.12
+
+      Handler: src/handlers/user_details.lambda_handler
+
+      CodeUri: .
+
+      MemorySize: 128
+
+      Timeout: 10
+
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: users-table
+
+      Events:
+        GetUserByIdApi:
+          Type: Api
+
+          Properties:
+            Path: /v1/users/{id}
+            Method: get
+
+  SearchUsersFunction:
+    Type: AWS::Serverless::Function
+
+    Properties:
+      FunctionName: search-users-function
+
+      Runtime: python3.12
+
+      Handler: src/handlers/search_users.lambda_handler
+
+      CodeUri: .
+
+      MemorySize: 128
+
+      Timeout: 10
+
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: users-table
+
+      Events:
+        SearchUsersApi:
+          Type: Api
+
+          Properties:
+            Path: /v1/users/search
+            Method: get
+Outputs:
+
+  ApiUrl:
+    Description: API Gateway endpoint URL
+
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/

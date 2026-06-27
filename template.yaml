@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Serverless User Directory Application
+
+Resources:
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: users-table
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: health-function
+      Runtime: python3.12
+      Handler: src/handlers/health.lambda_handler
+      CodeUri: .
+      MemorySize: 128
+      Timeout: 5
+      Events:
+        HealthApi:
+          Type: Api
+          Properties:
+            Path: /v1/health
+            Method: get
+
+  SyncUsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: sync-users-function
+      Runtime: python3.12
+      Handler: src/handlers/sync_users.lambda_handler
+      CodeUri: .
+      MemorySize: 256
+      Timeout: 30
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: users-table
+        - Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:user-directory-secrets*"
+      Events:
+        SyncUsersApi:
+          Type: Api
+          Properties:
+            Path: /v1/admin/sync-users
+            Method: post
+            Auth:
+              ApiKeyRequired: true
+
+  UsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: users-function
+      Runtime: python3.12
+      Handler: src/handlers/users.lambda_handler
+      CodeUri: .
+      MemorySize: 128
+      Timeout: 10
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: users-table
+      Events:
+        GetUsersApi:
+          Type: Api
+          Properties:
+            Path: /v1/users
+            Method: get
+
+  UserDetailsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: user-details-function
+      Runtime: python3.12
+      Handler: src/handlers/user_details.lambda_handler
+      CodeUri: .
+      MemorySize: 128
+      Timeout: 10
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: users-table
+      Events:
+        GetUserByIdApi:
+          Type: Api
+          Properties:
+            Path: /v1/users/{id}
+            Method: get
+
+  SearchUsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: search-users-function
+      Runtime: python3.12
+      Handler: src/handlers/search_users.lambda_handler
+      CodeUri: .
+      MemorySize: 128
+      Timeout: 10
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: users-table
+      Events:
+        SearchUsersApi:
+          Type: Api
+          Properties:
+            Path: /v1/users/search
+            Method: get
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/

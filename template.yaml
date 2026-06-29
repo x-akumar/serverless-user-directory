@@ -22,6 +22,7 @@ Resources:
       StageName: Prod
       DisableExecuteApiEndpoint: true
       Auth:
+        ApiKeyRequired: true
         UsagePlan:
           CreateUsagePlan: PER_API
           UsagePlanName: serverless-user-directory-usage-plan
@@ -42,6 +43,8 @@ Resources:
             Path: /v1/health
             Method: get
             RestApiId: !Ref ServerlessApi
+            Auth:
+              ApiKeyRequired: true
 
   SyncUsersFunction:
     Type: AWS::Serverless::Function
@@ -89,6 +92,8 @@ Resources:
             Path: /v1/users
             Method: get
             RestApiId: !Ref ServerlessApi
+            Auth:
+              ApiKeyRequired: true
 
   UserDetailsFunction:
     Type: AWS::Serverless::Function
@@ -109,6 +114,8 @@ Resources:
             Path: /v1/users/{id}
             Method: get
             RestApiId: !Ref ServerlessApi
+            Auth:
+              ApiKeyRequired: true
 
   SearchUsersFunction:
     Type: AWS::Serverless::Function
@@ -129,6 +136,8 @@ Resources:
             Path: /v1/users/search
             Method: get
             RestApiId: !Ref ServerlessApi
+            Auth:
+              ApiKeyRequired: true
 
 Outputs:
   ApiUrl:

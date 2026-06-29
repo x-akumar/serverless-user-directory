@@ -2,6 +2,15 @@
 
 A fully serverless REST API built on AWS that syncs users from an external source and exposes search, lookup, and listing endpoints. Deployed automatically via GitHub Actions using OpenID Connect (no long-lived AWS credentials).
 
+**Live API:** `https://api.aws-104.in`
+
+| Endpoint | URL |
+|---|---|
+| Health | https://api.aws-104.in/v1/health |
+| List Users | https://api.aws-104.in/v1/users |
+| Get User | https://api.aws-104.in/v1/users/1 |
+| Search | https://api.aws-104.in/v1/users/search?firstName=Emily |
+
 ---
 
 ## Architecture

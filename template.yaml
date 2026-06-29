@@ -16,6 +16,16 @@ Resources:
         - AttributeName: id
           KeyType: HASH
 
+  ServerlessApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DisableExecuteApiEndpoint: true
+      Auth:
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: serverless-user-directory-usage-plan
+
   HealthFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -31,6 +41,7 @@ Resources:
           Properties:
             Path: /v1/health
             Method: get
+            RestApiId: !Ref ServerlessApi
 
   SyncUsersFunction:
     Type: AWS::Serverless::Function
@@ -55,6 +66,7 @@ Resources:
           Properties:
             Path: /v1/admin/sync-users
             Method: post
+            RestApiId: !Ref ServerlessApi
             Auth:
               ApiKeyRequired: true
 
@@ -76,6 +88,7 @@ Resources:
           Properties:
             Path: /v1/users
             Method: get
+            RestApiId: !Ref ServerlessApi
 
   UserDetailsFunction:
     Type: AWS::Serverless::Function
@@ -95,6 +108,7 @@ Resources:
           Properties:
             Path: /v1/users/{id}
             Method: get
+            RestApiId: !Ref ServerlessApi
 
   SearchUsersFunction:
     Type: AWS::Serverless::Function
@@ -114,9 +128,9 @@ Resources:
           Properties:
             Path: /v1/users/search
             Method: get
+            RestApiId: !Ref ServerlessApi
 
 Outputs:
   ApiUrl:
-    Description: API Gateway endpoint URL
-    Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+    Description: Custom domain API endpoint
+    Value: https://api.aws-104.in
